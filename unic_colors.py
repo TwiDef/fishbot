@@ -25,7 +25,20 @@ image_path = "assets/diff/result.jpg"
 unique_colors = get_unic_colors(image_path)
 colors_list = list(unique_colors)
 
-#sorting colors
+""" print(colors_list) """
+
+#find red colors
+def find_red_colors_by_rgb(color_list):
+  red_colors = []
+  for r, g, b in color_list:
+      if r > g and r > b:
+          red_colors.append((r, g, b))
+  return red_colors
+
+red_colors_rgb = find_red_colors_by_rgb(colors_list)
+print(f"Red colors (by RGB): {red_colors_rgb}")
+
+""" #sorting colors
 def sort_rgb_by_hue(rgb_list):
   normalized_rgb_list = [(r / 255.0, g / 255.0, b / 255.0) for r, g, b in rgb_list]
 
@@ -35,12 +48,5 @@ def sort_rgb_by_hue(rgb_list):
   return sorted_rgb_list
 
 sorted_colors = sort_rgb_by_hue(colors_list)
-print(sorted_colors)
-
-""" if isinstance(unique_colors, set):
-    print("Unic colors in image")
-    for color in unique_colors:
-      print(color)
-else:
-  print(unique_colors) """
+print(sorted_colors) """
 

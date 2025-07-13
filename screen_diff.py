@@ -1,7 +1,7 @@
 from PIL import Image, ImageChops
 
-screenshot_1 = Image.open("assets/shots/s_2590.png")
-screenshot_2 = Image.open("assets/shots/s_9226.png")
+screenshot_1 = Image.open("assets/shots/s_1527.png")
+screenshot_2 = Image.open("assets/shots/s_7889.png")
 
 res = ImageChops.difference(screenshot_1, screenshot_2)
 res.show()

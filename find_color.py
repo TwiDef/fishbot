@@ -18,7 +18,7 @@ def find_color_coords(image_path, target_color):
     return f"Error: {Exception}"      
   
 image_path = "assets/diff/result.jpg"
-target_color = [(131, 24, 66), (131, 23, 65)]
+target_color =  (38, 0, 4)
 
 coords = find_color_coords(image_path, target_color)
 
