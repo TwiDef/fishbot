@@ -1,3 +1,4 @@
+# Alt + z (hide GUI in WoW)
 # use Fishing => mouseover bobber => delay 6s => click G(interact) => click mouse_1 => delay 5s => loop
 import pyautogui
 import random
