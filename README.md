@@ -1,1 +1,1 @@
-simple script for fishing in WoW WotLK
+simple script for fishing in WotLK
