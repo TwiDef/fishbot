@@ -4,11 +4,14 @@ import time
 import logging
 import pyautogui
 import random
-from pynput.keyboard import Controller, Key
+from pynput.keyboard import Controller
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 keyboard = Controller()
-duration = 10
+
+screenshots_folder_path = "assets/shots"
+diff_folder_path = "assets/diff"
+
 LEFT_FRAME_BORDER = 600
 TOP_FRAME_BORDER = 50
 
@@ -80,67 +83,95 @@ def find_color_coords(image_path, target_color):
 def convert_coords(coords):
   tuple_coords = coords
   return tuple_coords
+
+def delete_files_in_folder(folder_path):
+  for filename in os.listdir(folder_path):
+    file_path = os.path.join(folder_path, filename)
+    try:
+      if os.path.isfile(file_path):
+        os.remove(file_path)
+    except Exception:
+      print(f'Ошибка при удалении файла {file_path}. {Exception}')
   
 
 # game keys binding
 fishing_action = "3"
 equip_fishing_pole = "r"
 
-# start programm
-logging.info("capture to focus game window! delay 10 seconds")
+def fishing():
+  # start programm
+  duration = 6
+  logging.info("capture to focus game window! delay 10 seconds")
 
-while duration > 0:
-  logging.info(" " + str(duration) + " seconds remaining...")
+  while duration > 0:
+    logging.info(" " + str(duration) + " seconds remaining...")
+    time.sleep(1)
+    duration -= 1
+
+  # equip fishing pole 
+  keyboard.press(equip_fishing_pole)
+  time.sleep(0.3)
+  keyboard.release(equip_fishing_pole)
+
+  # do screenshot frame without bobber
   time.sleep(1)
-  duration -= 1
+  logging.info("screenshot without bobber has been captured")
+  screenshot_frame()
 
-# equip fishing pole 
-keyboard.press(equip_fishing_pole)
-time.sleep(0.3)
-keyboard.release(equip_fishing_pole)
+  # start fishing
+  keyboard.press(fishing_action)
+  time.sleep(0.3)
+  keyboard.release(fishing_action) 
 
-# do screenshot frame without bobber
-time.sleep(1)
-logging.info("screenshot without bobber has been captured")
-screenshot_frame()
+  # do screenshot frame with active bobber
+  time.sleep(1)
+  logging.info("screenshot with bobber has been captured")
+  screenshot_frame()
 
-# start fishing
-keyboard.press(fishing_action)
-time.sleep(0.3)
-keyboard.release(fishing_action) 
+  # create image list
+  image_list = create_image_list("assets/shots")
 
-# do screenshot frame with active bobber
-time.sleep(1)
-logging.info("screenshot with bobber has been captured")
-screenshot_frame()
+  screenshot_1 = Image.open(image_list[0])
+  screenshot_2 = Image.open(image_list[1]) 
 
-# create image list
-image_list = create_image_list("assets/shots")
+  res = ImageChops.difference(screenshot_1, screenshot_2)
+  logging.info("difference image has been generated")
+  res.save("assets/diff/result.jpg")
 
-screenshot_1 = Image.open(image_list[0])
-screenshot_2 = Image.open(image_list[1]) 
+  #get unic colors from diff image
+  diff_image_path = "assets/diff/result.jpg"
+  unique_colors = get_unic_colors(diff_image_path)
+  colors_list = list(unique_colors)
 
-res = ImageChops.difference(screenshot_1, screenshot_2)
-logging.info("difference image has been generated")
-res.save("assets/diff/result.jpg")
+  # find red colors
+  red_colors_rgb = find_red_colors_by_rgb(colors_list)
 
-#get unic colors from diff image
-image_path = "assets/diff/result.jpg"
-unique_colors = get_unic_colors(image_path)
-colors_list = list(unique_colors)
+  # find deeper red color
+  deep_red_color = find_deep_red_color(red_colors_rgb)
 
-# find red colors
-red_colors_rgb = find_red_colors_by_rgb(colors_list)
+  # find coords by target_color
+  coords = find_color_coords(diff_image_path, deep_red_color)
 
-# find deeper red color
-deep_red_color = find_deep_red_color(red_colors_rgb)
+  # generated x an dy coordinates
+  x_coord, y_coord = convert_coords(*coords)
 
-# find coords by target_color
-coords = find_color_coords(image_path, deep_red_color)
+  # move mouse to dinamic coordinates
+  pyautogui.moveTo(x_coord + LEFT_FRAME_BORDER, y_coord + TOP_FRAME_BORDER, duration=0.5)
+  time.sleep(6.5)
 
-# generated x an dy coordinates
-x_coord, y_coord = convert_coords(*coords)
+  # collect the catch
+  logging.info("collect the catch")
+  pyautogui.rightClick()
+  time.sleep(1)
+  pyautogui.click()
 
-# move mouse to dinamic coordinates
-pyautogui.moveTo(x_coord + LEFT_FRAME_BORDER, y_coord + TOP_FRAME_BORDER)
-time.sleep(1)
+  # remove all screens
+  delete_files_in_folder(diff_folder_path)
+  delete_files_in_folder(screenshots_folder_path)
+
+  duration = 10
+
+i = 50
+while i > 1:
+  fishing()
+  i -= 1
