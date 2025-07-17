@@ -1,9 +1,12 @@
-from PIL import Image, ImageChops
 import os
 import time
 import logging
 import pyautogui
 import random
+from PIL import Image, ImageChops
+from skimage.metrics import mean_squared_error
+from skimage.transform import resize
+from skimage.io import imread
 from pynput.keyboard import Controller
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
@@ -17,6 +20,9 @@ TOP_FRAME_BORDER = 50
 
 def screenshot_frame():
   pyautogui.screenshot(region = (LEFT_FRAME_BORDER, TOP_FRAME_BORDER, 800, 400)).save("assets/shots/s_" + str(random.randint(1, 9999)) + ".png")
+
+def screenshot_bobber(x_coord, y_coord, path, name):
+  pyautogui.screenshot(region = (x_coord - 30, y_coord - 30, 60, 60)).save(path + name + ".png")
 
 def create_image_list(dir_path):
   image_list = []
@@ -100,8 +106,8 @@ equip_fishing_pole = "r"
 
 def fishing():
   # start programm
-  duration = 6
-  logging.info("capture to focus game window! delay 10 seconds")
+  duration = 3
+  logging.info(f"capture to focus game window! delay {duration} seconds")
 
   while duration > 0:
     logging.info(" " + str(duration) + " seconds remaining...")
@@ -156,8 +162,43 @@ def fishing():
   x_coord, y_coord = convert_coords(*coords)
 
   # move mouse to dinamic coordinates
-  pyautogui.moveTo(x_coord + LEFT_FRAME_BORDER, y_coord + TOP_FRAME_BORDER, duration=0.5)
-  time.sleep(6.5)
+  pyautogui.moveTo(x_coord + LEFT_FRAME_BORDER, y_coord + TOP_FRAME_BORDER, duration=0.2)
+  #time.sleep(0.3)
+
+  # get mouse position
+  x, y = pyautogui.position()
+
+  # catch by trigger
+  screenshot_bobber(x, y, "assets/bobber/", "base")
+
+  is_catch = False
+  fuse_flag = 55
+
+  while not is_catch:
+    # clear trigger screenshots folder
+    delete_files_in_folder("assets/trigger")
+    time.sleep(0.2)
+
+    screenshot_bobber(x,y, "assets/trigger/", "trigger")
+      
+    img_1 = imread("assets/bobber/base.png", as_gray=True)
+    img_2 = imread("assets/trigger/trigger.png", as_gray=True)
+
+    img_1_resized = resize(img_1, (512, 512), anti_aliasing=True)
+    img_2_resized = resize(img_2, (512, 512), anti_aliasing=True)
+
+    # seek the difference between base image and trigger image (in %)
+    mse = mean_squared_error(img_1_resized, img_2_resized)
+    max_possible_mse = 1.0 
+    similarity_percentage = (1 - (mse / max_possible_mse)) * 100
+    #logging.info(similarity_percentage)
+    fuse_flag -= 1
+
+    # exit from loop (we have the diffence or waiting too much)
+    if similarity_percentage < 99.5 or fuse_flag < 1:
+      is_catch = True
+      delete_files_in_folder("assets/trigger")
+      delete_files_in_folder("assets/bobber")
 
   # collect the catch
   logging.info("collect the catch")
@@ -169,9 +210,7 @@ def fishing():
   delete_files_in_folder(diff_folder_path)
   delete_files_in_folder(screenshots_folder_path)
 
-  duration = 10
-
-i = 50
-while i > 1:
+i = int(input("How many times do you want to cast a fishing? "))
+while i > 0:
   fishing()
   i -= 1
